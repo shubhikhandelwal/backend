@@ -1,8 +1,9 @@
 import connectDB from "./db/db.js";
 // require('dotenv').config({path : './env'})  //to just improve consistency
 import dotenv from "dotenv";
-dotenv.config({path : './.env'}) //this is not a very availiable syntax so we can use it as an experimental feature as you can see in package.json
+dotenv.config({path : './.env'}) //this is not a very availiable syntax so we can use it as an experimental feature 
 
+//dot env se as soon as you load your app environment variables har jagah availiable hojaye
 
 connectDB() //ye apn ne async await ki tarah likha hai so we can use .then and .catch to handle it because it returns a process
 .then(() => {
@@ -33,7 +34,7 @@ const app = express()
 (async () => {
     try {
        await moongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`) //documentation se format
-       app.on("error" , (error) => {
+       app.on("error" , (error) => { //agar koi error aagya to just in case
         console.error("ERROR" , error)
         throw error
        }) //express ki app listen nhi kr parhi h to error listen kr liya .on is a listener provided by express
