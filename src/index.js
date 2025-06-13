@@ -4,7 +4,22 @@ import dotenv from "dotenv";
 dotenv.config({path : './.env'}) //this is not a very availiable syntax so we can use it as an experimental feature as you can see in package.json
 
 
-connectDB();
+connectDB() //ye apn ne async await ki tarah likha hai so we can use .then and .catch to handle it because it returns a process
+.then(() => {
+    app.on("error" , (error) => {
+        console.error("ERROR" , error)
+        throw error
+       })
+    app.listen(process.env.PORT, () => { //aur listen to kiya hi nhi tha to yuu krega
+        console.log(`App is listening on port ${process.env.PORT}`)
+    })
+})
+.catch((error) => {
+    console.error("MongoDb connection failed", error)
+}) //yeh promise hai jo connectDB se aa raha hai so we can use .then and .catch to handle it
+
+
+
 
 
 
