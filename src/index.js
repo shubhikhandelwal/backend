@@ -5,7 +5,7 @@ dotenv.config({path : './.env'}) //this is not a very availiable syntax so we ca
 
 //dot env se as soon as you load your app environment variables har jagah availiable hojaye
 
-connectDB() //ye apn ne async await ki tarah likha hai so we can use .then and .catch to handle it because it returns a process
+connectDB() //ye apn ne async await ki tarah likha hai so we can use .then and .catch to handle it because it returns a promise
 .then(() => {
     app.on("error" , (error) => {
         console.error("ERROR" , error)
