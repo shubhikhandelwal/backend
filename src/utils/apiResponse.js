@@ -8,4 +8,4 @@ class apiResponse {
 }
 
 // This class is designed to standardize all successful responses from your API.
-// Instead of sending plain res.json(...), you can send structured responses like:
+// Instead of sending plain res.json(...), you can send structured responses like above
