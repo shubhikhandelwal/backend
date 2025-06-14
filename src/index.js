@@ -2,6 +2,7 @@ import connectDB from "./db/db.js";
 // require('dotenv').config({path : './env'})  //to just improve consistency
 import dotenv from "dotenv";
 dotenv.config({path : './.env'}) //this is not a very availiable syntax so we can use it as an experimental feature 
+import {app} from './app.js'
 
 //dot env se as soon as you load your app environment variables har jagah availiable hojaye
 

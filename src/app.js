@@ -15,6 +15,14 @@ app.use(express.urlencoded({extended: true , limit: "10kb"})) //jab url se data 
 app.use(express.static("public")) //static mtb koi bhi assets like pdf photo use public folder mai save rkhn hai
 app.use(cookieParser()) 
 
+//routes
+
+import userRouter from './routes/user.routes.js' //vha default export kiya h to kisi bhi naam se import kr skte h
+
+//routes declaration
+// app.get use nhi krskte because abb yhi pe route nhi banaya h alag banaya h to middleware use krne pdege 
+
+app.use("/api/v1/users" , userRouter); //=> ye api/v1/users aate hi control userRouter pe transfer hojayega
+// http://locallhost:8000/api/v1/users/register 
 
 export {app};
-
