@@ -48,7 +48,7 @@ const userSchema = new Schema({
 
 userSchema.pre("save" , async function (next) { //middleware h to next to hoga hi jab kaam hojaye to next m pass krdo
     if(!this.isModified("password")) return next(); //agar password hi modify nhi hua to run hi nhi krna ye method
-    this.password = bcrypt.hash(this.password, 10) //encrypt password 
+    this.password = await bcrypt.hash(this.password, 10) //encrypt password 
     next()
 }) //a hook to do some work just before saving the data
 
