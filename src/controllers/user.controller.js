@@ -22,16 +22,28 @@ const registerUser = asyncHandler( async (req,res) => {
     if(existedUser){
         throw new apiError(409 , "User with email or username already exist")
     }
+
+
     
     const avatarLocalPath = req.files?.avatar[0]?.path
-    const CoverImageLocalPath = req.files?.coverImage[0]?.path
+    // const CoverImageLocalPath = req.files?.coverImage[0]?.path
+
+    let CoverImageLocalPath; // Declares a variable to hold the local file path of the uploaded coverImage.It’s initially undefined.
+    if(req.files //check if req.files exists
+        && Array.isArray(req.files.coverImage) //check if coverImage is an array (Multer uses arrays for .fields())
+         && req.files.coverImage.length > 0){ //check if there’s at least one file uploaded
+        CoverImageLocalPath = req.files.coverImage[0].path
+    } //this functionality was added because when user uploads it without coverImage it throws error that is undefined but with this coudinary will return an empty string instead
+
+    // console.log(avatarLocalPath , CoverImageLocalPath)
 
     if(!avatarLocalPath) {
         throw new apiError(400 , "Avatar image is required")
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath) //req.files is an object provided by multer.fields().Since avatar and coverImage each accept one image (as per multer config), we access their paths using req.files.avatar[0].path.
-    const coverImage = await uploadOnCloudinary(CoverImageLocalPath)
+     //req.files is an object provided by multer.fields().Since avatar and coverImage each accept one image (as per multer config), we access their paths using req.files.avatar[0].path.
+      const avatar = await uploadOnCloudinary(avatarLocalPath);
+      const coverImage = await uploadOnCloudinary(CoverImageLocalPath);
 
     if(!avatarLocalPath) {
         throw new apiError(400 , "Avatar image is required")
@@ -43,7 +55,7 @@ const registerUser = asyncHandler( async (req,res) => {
         coverImage : coverImage?.url || "", //hai ya nhi
         email,
         password,
-        username : username.toLowerCase() 
+        username 
     })
 
     const createdUser = await User.findById(user._id).select( //access kiya same user with the help of if
