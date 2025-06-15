@@ -4,7 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
-
+import fs from 'fs';
 
 
 const generateAccessAndRefreshToken = async(userId) => {
@@ -287,7 +287,6 @@ const updateAvatar = asyncHandler(async(req,res) => {
      if(!avatar) {
         new apiError(  400 , "error while uploading on avatar")
     }
-
     
    const user = await User.findByIdAndUpdate(req.user._id , 
         {$set :{
@@ -295,6 +294,9 @@ const updateAvatar = asyncHandler(async(req,res) => {
         }},
         {new : trur}
     ).select("-password")
+
+    //delete old avatar
+
 
     return res.status(200)
     .json(
