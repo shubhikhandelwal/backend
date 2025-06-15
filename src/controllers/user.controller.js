@@ -232,7 +232,8 @@ const refreshAccessToken = asyncHandler(async ( req, res ) => {
 }) //jab access token expire hojayega to frontend mai user ko ek particular end point hit kra dege aur ye refresh hojayega
 
 
-export {registerUser
+export {
+    registerUser
     ,loginUser
     ,logOutUser
     ,refreshAccessToken
