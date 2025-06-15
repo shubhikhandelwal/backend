@@ -3,6 +3,7 @@ import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken";
 
 
 
@@ -185,8 +186,54 @@ const logOutUser = asyncHandler(async(req , res) => {
    .json(new apiResponse(200 , "user logged out"))
 })
 
+const refreshAccessToken = asyncHandler(async ( req, res ) => {
+   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+   if(!incomingRefreshToken){
+    throw new apiError(401 , "unauthorised request")
+   }
+
+  try {
+     const decodedToken = jwt.verify(  //ye basically aapko decode krke deta hai token ko jo ki encrypted aata hai from the user
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+     )
+  
+     const user = await User.findById(decodedToken?._id)
+  
+        if(!user){
+      throw new apiError(401 , "invalid token")
+     }
+  
+     if(incomingRefreshToken !== user?.refreshToken){
+      throw new apiError(401 , "refresh token is expired or used")
+     }
+  
+     const options = {
+      httpOnly : true,
+      secure : true
+     }
+  
+     const {newRefreshToken , accessToken} = await generateAccessAndRefreshToken(user._id)
+  
+     res.status(200)
+     .cookie("accessToken" , accessToken , options)
+     .cookie("refreshToken" , newRefreshTokenefreshToken , options)
+     .json(
+      new apiResponse(
+          200,
+          {accessToken , refreshToken : newRefreshToken},
+          "access token refreshed"
+      )
+     )
+  } catch (error) {
+    throw new apiError(401 , error?.message || "invalid refresh token")
+  }
+}) //jab access token expire hojayega to frontend mai user ko ek particular end point hit kra dege aur ye refresh hojayega
+
 
 export {registerUser
     ,loginUser
     ,logOutUser
+    ,refreshAccessToken
 }
