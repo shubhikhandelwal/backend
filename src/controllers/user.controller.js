@@ -4,6 +4,24 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 
+
+
+const generateAccessAndRefreshToken = async(userId) => {
+    try {
+        const user = await User.findById(userId) //Fetches the user document from the database using the provided userId.
+        const accessToken = user.generateAccessToken() //ye function banaye hue h
+        const refreshToken = user.generateRefreshToken()
+
+        user.refreshToken =  refreshToken //db mai save {user ka access hame mil hi gya h jo ki ek object ki form mai h to usme vse hi add krdiya}
+        await user.save({validateBeforeSave : false}) //mongo ke function save krna hai just kou validation nhi krna
+
+        return {accessToken , refreshToken} //kaam hone ke baad return krdo
+
+    } catch (error) {
+        throw new apiError(500 , "Something went wrong while generating refresh and access token")
+    }
+}
+
 const registerUser = asyncHandler( async (req,res) => {
     const {fullName , email, username, password} = req.body  //Destructures values from form data  most of the times data yhi se aajata h
     console.log("email" , email)
@@ -74,7 +92,7 @@ const registerUser = asyncHandler( async (req,res) => {
     
 } )
 // Currently, it just returns a JSON response with status 200 and message "ok" — a placeholder response.
-export {registerUser}
+
 
 //get user details from frontend
 //validation - not empty
@@ -85,3 +103,90 @@ export {registerUser}
 //remove password and refresh token field from response
 //check for user creation
 //return response
+
+
+const loginUser = asyncHandler(async (req,res) => {
+    //req.body se data
+    //username or email 
+    //find the user
+    //password check
+    //access and refresh token generate
+    //send cookie 
+    //response
+
+    const {email , username , password} = req.body
+    
+    if (!(username || email)) {
+        throw new apiError(400, " username or email is required")
+    }
+
+   const user = await User.findOne({
+    $or: [{ email }, { username }]
+});
+
+
+    if(!user){
+        throw new apiError(404 , "user does not exist") 
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password) //User moongoose ke methods access krta h prr jo methods apnne bnaye h vo apne user
+        //ke paas availiable hai to vo user se access hoga
+
+    if(!isPasswordValid){
+        throw new apiError(401 , "invalid password")
+    }
+
+   const {refreshToken , accessToken} = await generateAccessAndRefreshToken(user._id)
+
+   const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+   ) //select krlo user ko kya kya bhejna h
+
+   const options = { //cookie options
+    httpOnly : true, // The cookie cannot be accessed via JavaScrip
+    secure:true 
+   }
+
+   return res
+   .status(200)
+   .cookie("accessToken" , accessToken , options) //Sets the accessToken in a secure, HTTP-only cookie. //cookie tab hi use kr paaye kyuki cookieParser as a middleware used h
+   .cookie("refreshToken" ,refreshToken , options) //ye dono as cookies jarhe hai
+   .json(
+    new apiResponse(
+        200,
+        {
+            user : loggedInUser , 
+            accessToken , refreshToken //not recommended
+        },
+        "User Logged in sucessfully"
+    )
+   )
+
+})
+
+const logOutUser = asyncHandler(async(req , res) => {
+    //remove cookies and refresh tokens
+    await User.findByIdAndUpdate(req.user._id , { //req.user ka abb hamare paas access hai because hamne auth middleware mai set krdiya
+        $set : { //kya update krna h
+            refreshToken  : undefined
+        }
+    },{
+        new : true //abb ye response updated value dega
+    })  
+    const options = { 
+    httpOnly : true, 
+    secure:true 
+   }
+
+   return res
+   .status(200)
+   .clearCookie("accessToken" , options)
+   .clearCookie("refreshToken" , options)
+   .json(new apiResponse(200 , "user logged out"))
+})
+
+
+export {registerUser
+    ,loginUser
+    ,logOutUser
+}

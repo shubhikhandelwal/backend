@@ -56,7 +56,7 @@ userSchema.methods.isPasswordCorrect = async function(password) {
    return await bcrypt.compare(password, this.password) //compares the password given by user and encrypted password
 }
 
-userSchema.methods.generateAccessToken = function(){
+userSchema.methods.generateAccessToken = function(){  //validate access token se krte h agar user ke paas access token h to vo authenticate kr skta h
     return jwt.sign(
         { //This is the data (claims) that will be encoded inside the token. It’s typically:
             _id: this._id, //mongoDB gives this 
@@ -71,7 +71,7 @@ userSchema.methods.generateAccessToken = function(){
     )
 }
 
-userSchema.methods.generateRefreshToken = function(){
+userSchema.methods.generateRefreshToken = function(){ //db m bhi save or user ko bhi dete h refresh point agar dono match hogye to nya access token dedete h 
         return jwt.sign(  //syntax
         {
             _id: this._id,
