@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 
 const generateAccessAndRefreshToken = async(userId) => {
@@ -332,6 +333,134 @@ const updateCoverImage = asyncHandler(async(req,res) => {
 
 })
 
+const getUserChannelProfile = asyncHandler(async (req,res) => {
+    const {username} = req.params  //req.params contains route parameters — dynamic segments in the URL path.
+    //"Take the username value from the URL parameters and store it in a variable named username."
+
+    if(!username?.trim()){
+        throw new apiError(400 , "username is missing")
+    }
+
+   const channel = await User.aggregate([ //in aggregate pipelines we get arrays as response
+        {$match : {  //Finds a user document where the username matches
+            username: username?.toLowerCase()
+        }}
+        ,{
+            $lookup : { 
+               // From subscription collection: Find documents where channel is equal to this user’s _id. Store them in subscribers array.
+                from : "subscription", //subscription model banaya tha Subscription ka S s banjayega in mongo keep in mind
+                localField :"_id",
+                foreignField : "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $lookup: {
+                //Finds which channels this user is subscribed to (they’re the subscriber). Stores in subscribedTo array.
+                from : "subscription",
+                localField :"_id",
+                foreignField : "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields : { // Derive calculated fields:
+                subscriberCount  : {// subscriberCount: how many users subscribed to this channel.
+                    $size  : "$subscribers"
+                },
+                       //channelSubscribedToCount: how many channels this user is subscribed to
+                channelSubscribedToCount : { 
+                    $size : "$subscribedTo"
+                },
+                isSubscribed : { //isSubscribed: whether current logged-in user (req.user._id) is among the channel’s subscribers.
+                    $cond : {
+                        if: {$in : [req.user?._id , "$subscribers.subscriber"]},
+                        then : true, //hai to true vrna false
+                        else : false
+                    }
+                }
+            }
+        },
+        {
+            $project: {  //Only return the relevant fields to the client. (1 means include)
+                fullName : 1,
+                username: 1,
+                subscriberCount : 1,
+                channelSubscribedToCount : 1,
+                isSubscribed : 1,
+                avatar : 1,
+                coverImage : 1,
+                email : 1
+            }
+        }
+    ])
+
+    if(!channel?.length){
+        throw new apiError (404 , "channel does not exist")
+    }
+
+    console.log(channel);
+
+    return res.status(200) //channel ek array respond krega prr hamare kaam ka to first element hi h to channel[0]
+    .json(
+        new apiResponse(200 , channel[0] , "user channel fetched success")
+    )
+})
+
+const getWatchHistory = asyncHandler(async (req,res) => { ////mongoDb ki id encrypted store krta hai as a string vo milti hai apn ya mongo db ki id objectID() store krta hai prr mongoose _id likhte hi _id ko mongoDB ki ObjectID() mai convert krdeta h
+    const user = await User.aggregate(
+        [
+            {
+                $match : { //Filter the current user
+                    _id : new mongoose.Types.ObjectId(req.user_id) //when aggregate pipelines are used tab ye scenario change hojata hai tab mongoose change nhi kr pata and we have to give this format
+                }
+            },
+            {
+                $lookup : {
+                    from : "videos",
+                    localField : "watchHistory", /// this is an array of ObjectIds in User
+                    foreignField: "_id", /// this is an array of ObjectIds in User
+                    as : "watchHistory",
+                    pipeline : [
+                       { $lookup : {
+                            from : "user",
+                            localField : "owner", 
+                            foreignField : "_id",
+                            as : "owner", //usi field ko overwrite krdiya
+                            pipeline : [
+                                {
+                                    $project : { //abb us mai owner ki details mai to user ki sari field milegi to project krdiya
+                                        fullName : 1,
+                                        username : 1,
+                                        avatar : 1    
+                                    }
+                                },
+                                {
+                                    $addFields : {
+                                        owner : { //owner ka jo array milega uska first element
+                                            $first : "$owner"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+        ]
+                }
+            }
+        ]
+    ) 
+
+    return res.status(200)
+    .json(
+        new apiResponse(
+            200,
+            user[0].watchHistory ,  //Aggregation in MongoDB always returns an array of results, even if it only matches one document.
+            "Watch history fetched succesfully "
+        )
+    )
+})
+
 export {
     registerUser
     ,loginUser
@@ -339,7 +468,9 @@ export {
     ,refreshAccessToken
     ,changeCurrentPassword
     ,getCurrentUser
-    ,updateAccountDetails
+    ,updateAccountDetails 
     ,updateAvatar
     ,updateCoverImage
-}
+    ,getUserChannelProfile
+    ,getWatchHistory
+} 
