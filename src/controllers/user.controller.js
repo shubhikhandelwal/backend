@@ -168,8 +168,8 @@ const loginUser = asyncHandler(async (req,res) => {
 const logOutUser = asyncHandler(async(req , res) => {
     //remove cookies and refresh tokens
     await User.findByIdAndUpdate(req.user._id , { //req.user ka abb hamare paas access hai because hamne auth middleware mai set krdiya
-        $set : { //kya update krna h
-            refreshToken  : undefined
+        $unset : { //kya update krna h
+            refreshToken  : 1 //this removes the field from document
         }
     },{
         new : true //abb ye response updated value dega
