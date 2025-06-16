@@ -187,6 +187,7 @@ const logOutUser = asyncHandler(async(req , res) => {
 })
 
 const refreshAccessToken = asyncHandler(async ( req, res ) => {
+    // to check on post man first login then in header Content-Type: application/json
    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
    if(!incomingRefreshToken){
@@ -214,15 +215,15 @@ const refreshAccessToken = asyncHandler(async ( req, res ) => {
       secure : true
      }
   
-     const {newRefreshToken , accessToken} = await generateAccessAndRefreshToken(user._id)
+     const {RefreshToken , accessToken} = await generateAccessAndRefreshToken(user._id)
   
      res.status(200)
      .cookie("accessToken" , accessToken , options)
-     .cookie("refreshToken" , newRefreshTokenefreshToken , options)
+     .cookie("refreshToken" , RefreshToken , options)
      .json(
       new apiResponse(
           200,
-          {accessToken , refreshToken : newRefreshToken},
+          {accessToken , refreshToken : RefreshToken},
           "access token refreshed"
       )
      )
@@ -261,13 +262,17 @@ const updateAccountDetails = asyncHandler(async (req , res) => {
         throw new apiError(400 , "all fields are required")
     }
 
+    console.log("REQ.USER:", req.user); // should show the logged-in user
+
+
    const user = await User.findByIdAndUpdate(req.user._id , 
         {$set :{
             fullName,
             email
         }},
-        {new : trur}
+        {new : true}
     ).select("-password")
+
 
     return res.status(200)
     .json(
@@ -412,7 +417,7 @@ const getWatchHistory = asyncHandler(async (req,res) => { ////mongoDb ki id encr
         [
             {
                 $match : { //Filter the current user
-                    _id : new mongoose.Types.ObjectId(req.user_id) //when aggregate pipelines are used tab ye scenario change hojata hai tab mongoose change nhi kr pata and we have to give this format
+                    _id : new mongoose.Types.ObjectId(req.user._id) //when aggregate pipelines are used tab ye scenario change hojata hai tab mongoose change nhi kr pata and we have to give this format
                 }
             },
             {
@@ -450,6 +455,8 @@ const getWatchHistory = asyncHandler(async (req,res) => { ////mongoDb ki id encr
             }
         ]
     ) 
+
+    console.log(user.length)
 
     return res.status(200)
     .json(

@@ -41,6 +41,7 @@ router.route ( "/current-user" ).get(
 )
 
 router.route ( "/update-acc-details" ).patch(
+    verifyJWT,
     updateAccountDetails
 )
 
