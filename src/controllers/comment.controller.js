@@ -4,12 +4,34 @@ import {apiError} from "../utils/apiError.js"
 import {apiResponse} from "../utils/apiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
-const getVideoComments = asyncHandler(async (req, res) => {
+
+//****************NEW THING LEARNED **************************/
+const getVideoComments = asyncHandler(async (req, res) => {  
     //TODO: get all comments for a video
     const {videoId} = req.params
-    const {page = 1, limit = 10} = req.query
+    const {page = 1, limit = 10} = req.query //from url only
 
-    
+    if (!videoId) {
+        throw new apiError(400, "Video ID is required");
+    }
+
+    // Convert page and limit to numbers because they are in numbers
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+
+    const comments = await Comment.find({ video: videoId })
+        .skip((pageNumber - 1) * limitNumber)  //kitne comments skip krege when we go to next page
+        .limit(limitNumber); //ek page pe kitni limit
+
+
+    return res.status(200).json(
+        new apiResponse(200, {
+            page: pageNumber,
+            limit: limitNumber,
+            comments
+        }, "Comments fetched successfully")
+    );
+
 })
 
 const addComment = asyncHandler(async (req, res) => {
