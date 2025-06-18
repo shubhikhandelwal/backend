@@ -297,7 +297,7 @@ const updateAvatar = asyncHandler(async(req,res) => {
         {$set :{
             avatar: avatar.url //imp
         }},
-        {new : trur}
+        {new : true}
     ).select("-password")
 
     //delete old avatar
