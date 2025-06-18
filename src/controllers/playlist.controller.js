@@ -119,7 +119,7 @@ const deletePlaylist = asyncHandler(async (req, res) => {
     }
 
      return res.status(200).json(
-        new apiResponse(200, {} , "playlist deleted successfully")
+        new apiResponse(200, deletedPlaylist , "playlist deleted successfully")
     )
 
     // TODO: delete playlist

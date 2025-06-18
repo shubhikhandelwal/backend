@@ -28,7 +28,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     });
     }
 
-    res.status(200)
+    return res.status(200)
     .json(
         new apiResponse(200 , {} , "Video like Toggle done"))
 
@@ -53,7 +53,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     });
     }
 
-    res.status(200)
+    return res.status(200)
     .json(
         new apiResponse(200 , {} , "comment  like Toggle done"))
 
@@ -80,7 +80,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     });
     }
 
-    res.status(200)
+    return res.status(200)
     .json(
         new apiResponse(200 , {} , "tweet  like Toggle done"))
 
