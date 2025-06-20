@@ -287,6 +287,17 @@ const updateAvatar = asyncHandler(async(req,res) => {
         new apiError(  400 , "avatar file is missing" )
     }
 
+    //delete old avatar
+    // To delete a file from Cloudinary, you need the public_id of that im
+    
+    const userData = await User.findById(req.user._id);
+
+    // 1. Delete old avatar if it exists
+    if (userData?.avatarPublicId) {
+        await cloudinary.uploader.destroy(userData.avatarPublicId);
+    }
+
+
     const avatar  = await uploadOnCloudinary(avatarLocalPath)
 
      if(!avatar) {
@@ -295,13 +306,13 @@ const updateAvatar = asyncHandler(async(req,res) => {
     
    const user = await User.findByIdAndUpdate(req.user._id , 
         {$set :{
-            avatar: avatar.url //imp
+            avatar: avatar.url, //imp
+            avatarPublicId: avatar.public_id // store for deletion next tim
         }},
         {new : true}
     ).select("-password")
 
-    //delete old avatar
-
+    
 
     return res.status(200)
     .json(
