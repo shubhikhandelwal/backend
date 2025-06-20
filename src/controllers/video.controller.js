@@ -8,9 +8,53 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
-    //TODO: get all videos based on query, sort, pagination
-})
+    let { page = 1, limit = 10, query = "", sortBy = "createdAt", sortType = "desc", userId } = req.query;
+    //We are extracting query parameters from the URL like this: /videos?page=2&limit=5&query=funny&sortBy=views&sortType=asc&userId=abc123Default values are set in case any of these aren't provided.
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const skip = (page - 1) * limit;
+    //parseInt converts the string values (from URL) to numbers. skip tells MongoDB how many documents to skip for pagination.
+
+    // Create the filter
+    const filter = {};
+    //This will hold MongoDB query filters to narrow down which videos we want.
+
+    if (query) { 
+        filter.$or = [
+            { title: { $regex: query, $options: "i" } },
+            { description: { $regex: query, $options: "i" } }
+        ];
+    } //This part does searching:
+// If the user typed a word (like "funny") into the search bar (query),
+//It looks for that word in either:
+// video title or description
+//✅ $regex allows partial matches (like "fun" matches "funny"). ✅ $options: "i" means case-insensitive search.
+
+    // Create the sort
+    const sort = {};
+    sort[sortBy] = sortType === "asc" ? 1 : -1; //We let users choose what they want, like this: This sets: 1 for ascending (A → Z, 0 → 9) -1 for descending (Z → A, latest → oldest)  sortBy mai pass hoga kse sort krna h like createdBy
+  //Sorting means in what order you want to show videos: newest first → sort by date (descending) most views → sort by views (descending)alphabetically → sort by title
+
+    // Fetch total count for pagination
+    const total = await Video.countDocuments(filter);
+    // Before fetching actual data, we count how many total videos match the filter (after search and userId filter). This helps calculate totalPages for pagination on frontend.
+
+
+
+    // Fetch videos
+    const videos = await Video.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit);
+
+
+    // Send response
+    res.status(200).json(
+        new apiResponse(200 , videos , "video got successfully")
+    );
+});
+
 
 const publishAVideo = asyncHandler(async (req, res) => {
 
